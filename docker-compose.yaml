@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  app:
+    container_name: nest-js-aws-dyamodb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    command: "tail  -f /dev/null"
