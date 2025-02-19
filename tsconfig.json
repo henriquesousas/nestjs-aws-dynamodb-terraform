@@ -18,6 +18,12 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
-    "allowJs": true
-  }
+    "allowJs": true,
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@user/*": ["src/core/user/*"]
+    }
+  },
+
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }
