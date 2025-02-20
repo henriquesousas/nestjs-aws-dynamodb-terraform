@@ -1,0 +1,49 @@
+import { CreateUserUseCase } from '@core/user/application/usecases/create-user/create-user.usecase';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
+import { CreateUserRequestDto } from './create-user-request-dto';
+import { HttpResponse } from '../@shared/http-response';
+import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get-user-by-id.usecase';
+
+@Controller('user')
+export class UserController {
+  @Inject(CreateUserUseCase)
+  private readonly createUserUseCase: CreateUserUseCase;
+
+  @Inject(GetUserByIdUseCase)
+  private readonly getUserByIdUseCase: GetUserByIdUseCase;
+
+  @Post()
+  @HttpCode(201)
+  async create(@Body() dto: CreateUserRequestDto): Promise<HttpResponse> {
+    const [user, error] = (await this.createUserUseCase.execute(dto)).asArray();
+
+    if (error) throw error;
+
+    return HttpResponse.create({
+      userId: user.uuid().value,
+    });
+  }
+
+  @Get('/:userId')
+  @HttpCode(200)
+  async getById(
+    @Param('userId', new ParseUUIDPipe({ errorHttpStatusCode: 422 }))
+    userId: string,
+  ): Promise<HttpResponse> {
+    const [user, error] = (
+      await this.getUserByIdUseCase.execute({ userId })
+    ).asArray();
+
+    if (error) throw error;
+    return HttpResponse.ok(user);
+  }
+}

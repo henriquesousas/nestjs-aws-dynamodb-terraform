@@ -1,0 +1,9 @@
+[ok] Criar usuario
+[ok] Buscar usuario pelo Id
+[] Buscar todos os usuario cadastrados paginado
+[] Desativar usuario
+[] Ativar usuario
+[] Na busca ter opçao de trazer só os ativos ou inativos
+[] Quando finalizar cadastro enviar para um fila SQS (user-queue)
+[] Criar um consume da fila SQS (user-queue) e salvar no dynamodb
+
