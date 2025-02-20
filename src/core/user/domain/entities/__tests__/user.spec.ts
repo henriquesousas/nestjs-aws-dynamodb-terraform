@@ -4,7 +4,7 @@ import { Password } from '../../value-objects/password';
 import { Role, User, UserId } from '../user';
 
 describe('User Unit Test', () => {
-  it('should create a user', () => {
+  it.only('should create a user', () => {
     const sut = new User({
       name: new Name('user'),
       email: new Email('u@gmail.com'),

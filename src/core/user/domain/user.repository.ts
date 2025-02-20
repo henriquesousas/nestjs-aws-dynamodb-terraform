@@ -6,7 +6,7 @@ export interface UserFilter {
 }
 
 export interface UserRepository {
-  create(user: User): Promise<void>;
+  create(user: User): Promise<UserId>;
   update(user: User): Promise<boolean>;
   findBy(filter: UserFilter): Promise<User[]>;
   findAll(): Promise<User[]>;

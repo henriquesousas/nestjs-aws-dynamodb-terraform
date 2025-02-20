@@ -17,7 +17,7 @@ const makeSut = (): SutType => {
   const userMock = new UserBuilder({
     name: 'user1',
     email: 'user1@mail.com',
-    password: '123',
+    password: '123456',
   }).build();
 
   const repository = mockUserRepository;
@@ -38,8 +38,10 @@ describe('CrateUserUseCase Unit Test', () => {
     const result = await sut.execute({
       name: 'user1',
       email: 'user1@mail.com',
-      password: '123',
+      password: '123456',
     });
+
+    console.log(result.error);
 
     const user = result.asArray()[0];
     expect(result.isOk()).toBe(true);
@@ -69,7 +71,7 @@ describe('CrateUserUseCase Unit Test', () => {
     expect(exception.message).toBe('Usuário já cadastrada em nossa base');
   });
 
-  it.only('should return EntityValidationException if user has error', async () => {
+  it('should return EntityValidationException if user has error', async () => {
     const { repository, sut } = makeSut();
 
     const userMock = new UserBuilder({
