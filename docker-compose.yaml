@@ -1,14 +1,19 @@
-version: "3.9"
+version: '3.9'
 services:
-  app:
-    container_name: nest-js-aws-dyamodb
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/usr/src/app
+  dynamodb-local:
+    container_name: dynamodb-local
+    image: amazon/dynamodb-local:latest
     ports:
-      - 3000:3000
-    expose:
-      - 3000
-    command: "tail  -f /dev/null"
+      - '8000:8000'
+    volumes:
+      - dynamodb-data:/home/dynamodblocal
+    networks:
+      - dynamodb-network
+    # command: 'aws dynamodb create-table --cli-input-json file://table-script.json --endpoint-url http://localhost:8000'
+
+networks:
+  dynamodb-network:
+    driver: bridge
+
+volumes:
+  dynamodb-data:

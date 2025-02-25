@@ -1,12 +1,13 @@
-import { User, UserId } from '../../domain/entities/user';
-import { UserFilter, UserRepository } from '../../domain/user.repository';
+import { User, UserId } from '@core/user/domain/entities/user';
+import { UserFilter, UserRepository } from '@core/user/domain/user.repository';
 
 export class LocalUserRepository implements UserRepository {
   users: User[] = [];
 
   async create(user: User): Promise<UserId> {
     this.users.push(user);
-    return user.props.userId!;
+
+    return Promise.resolve(user.props.userId!);
   }
 
   async update(user: User): Promise<boolean> {
@@ -15,7 +16,7 @@ export class LocalUserRepository implements UserRepository {
     );
     if (userIndex === -1) return false;
     this.users[userIndex] = user;
-    return false;
+    return Promise.resolve(false);
   }
 
   async findBy(filter: UserFilter): Promise<User[]> {
@@ -31,10 +32,10 @@ export class LocalUserRepository implements UserRepository {
       );
     }
 
-    return [];
+    return Promise.resolve([]);
   }
 
   async findAll(): Promise<User[]> {
-    return this.users;
+    return Promise.resolve(this.users);
   }
 }

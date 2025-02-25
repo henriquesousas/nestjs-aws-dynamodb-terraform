@@ -1,6 +1,5 @@
 import { UserBuilder } from '@core/user/application/builder/user.builder';
-import { LocalUserRepository } from '../local_user.repository';
-import { User } from '@core/user/domain/entities/user';
+import { LocalUserRepository } from '../local/local_user.repository';
 
 describe('LocalUserRepository', () => {
   it('should create an user', async () => {
