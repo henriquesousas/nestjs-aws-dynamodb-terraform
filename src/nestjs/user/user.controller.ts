@@ -12,6 +12,7 @@ import {
 import { CreateUserRequestDto } from './create-user-request-dto';
 import { HttpResponse } from '../@shared/http-response';
 import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get-user-by-id.usecase';
+import { GetAllUsersUseCase } from '@core/user/application/usecases/get-user/get-all-users.usecase';
 
 @Controller('user')
 export class UserController {
@@ -20,6 +21,9 @@ export class UserController {
 
   @Inject(GetUserByIdUseCase)
   private readonly getUserByIdUseCase: GetUserByIdUseCase;
+
+  @Inject(GetAllUsersUseCase)
+  private readonly getAllUsersUseCase: GetAllUsersUseCase;
 
   @Post()
   @HttpCode(201)
@@ -43,6 +47,14 @@ export class UserController {
       await this.getUserByIdUseCase.execute({ userId })
     ).asArray();
 
+    if (error) throw error;
+    return HttpResponse.ok(user);
+  }
+
+  @Get()
+  @HttpCode(200)
+  async getAll(): Promise<HttpResponse> {
+    const [user, error] = (await this.getAllUsersUseCase.execute()).asArray();
     if (error) throw error;
     return HttpResponse.ok(user);
   }

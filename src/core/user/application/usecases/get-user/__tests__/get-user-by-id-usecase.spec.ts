@@ -19,7 +19,7 @@ const makeSut = (): SutType => {
     password: '123456',
   }).build();
 
-  const repository = mockUserRepository;
+  const repository = mockUserRepository as UserRepository;
   const sut = new GetUserByIdUseCase(repository);
   return {
     repository,
@@ -69,7 +69,7 @@ describe('GetUserByIdUseCase Unit Test', () => {
       userId: userMock.props.userId?.value,
     });
 
-    const [user, exception] = result.asArray();
+    const [user] = result.asArray();
     expect(result.isOk()).toBe(true);
     expect(user.name).toEqual(userMock.props.name.value);
   });

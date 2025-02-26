@@ -11,6 +11,7 @@ export class DynamoUserRepository
   extends AbstractDynamoDbService<UserOutputMapperDto>
   implements UserRepository
 {
+  //TODO: use env
   protected tableName = 'dev-users';
 
   constructor(client: DynamoDBClient) {

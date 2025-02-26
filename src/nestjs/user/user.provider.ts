@@ -1,10 +1,12 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { CreateUserUseCase } from '@core/user/application/usecases/create-user/create-user.usecase';
+import { GetAllUsersUseCase } from '@core/user/application/usecases/get-user/get-all-users.usecase';
 import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get-user-by-id.usecase';
 import { UserRepository } from '@core/user/domain/user.repository';
 import { DynamoUserRepository } from '@core/user/infrastructure/repository/dynamo/dynamo-user.repository';
 import { LocalUserRepository } from '@core/user/infrastructure/repository/local/local_user.repository';
 
+//TODO: use env
 export const AWS_SERVICES = {
   DYNAMODB_CLIENT: {
     provide: 'DYNAMO_DB_CLIENT',
@@ -50,6 +52,14 @@ export const USECASES = {
     provide: GetUserByIdUseCase,
     useFactory: (repository: UserRepository) => {
       return new GetUserByIdUseCase(repository);
+    },
+    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+  },
+
+  GET_ALL_USERS_USECASE: {
+    provide: GetAllUsersUseCase,
+    useFactory: (repository: UserRepository) => {
+      return new GetAllUsersUseCase(repository);
     },
     inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
   },

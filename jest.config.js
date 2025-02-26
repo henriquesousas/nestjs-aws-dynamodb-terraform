@@ -11,6 +11,7 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   moduleFileExtensions: ['js', 'json', 'ts'],
+
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     // '^@mocks/(.*)$': '<rootDir>/test/$1',

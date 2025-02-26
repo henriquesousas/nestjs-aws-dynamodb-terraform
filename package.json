@@ -13,13 +13,13 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:unit": "npm test -- --no-watchman -c jest-config.unit.js",
-    "test:int": "npm test  -- --no-watchman -c jest-config.integration.js"
+    "test:unit": "npm test -- -c jest-config.unit.js",
+    "test:int": "npm test  -- -c jest-config.integration.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.751.0",

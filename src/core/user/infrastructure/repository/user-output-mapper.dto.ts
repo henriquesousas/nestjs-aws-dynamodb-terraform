@@ -1,9 +1,13 @@
 /* eslint-disable prettier/prettier */
 import { UserBuilder } from '@core/user/application/builder/user.builder';
-import { UserOutputDto } from '@core/user/application/usecases/user-output-dto';
 import { User, UserId } from '@core/user/domain/entities/user';
 
-export class UserOutputMapperDto extends UserOutputDto {
+export class UserOutputMapperDto {
+  name: string;
+  email: string;
+  password: string;
+  isActive: boolean;
+  createdAt: Date;
   id: string;
 
   static toDomain(data: UserOutputMapperDto): User {

@@ -1,4 +1,4 @@
-export class UserOutputDto {
+export interface UserOutputDto {
   name: string;
   email: string;
   password: string;
