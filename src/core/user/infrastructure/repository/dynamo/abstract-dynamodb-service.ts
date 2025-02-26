@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */ /* eslint-disable prettier/prettier */
 import {
-  AttributeValue,
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
@@ -8,6 +6,8 @@ import {
   QueryCommandInput,
   ScanCommand,
   ScanCommandInput,
+  UpdateItemCommand,
+  UpdateItemCommandInput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -22,6 +22,25 @@ export abstract class AbstractDynamoDbService<T = any> {
       Item: marshall(item),
     });
     await this.client.send(command);
+  }
+
+  async updateItem(
+    key: { [key: string]: any },
+    updateExpression: string,
+    expressionAttributeNames: { [key: string]: string },
+    expressionAttributeValues: { [key: string]: any },
+  ) {
+    const params: UpdateItemCommandInput = {
+      TableName: this.tableName,
+      Key: key,
+      UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: 'UPDATED_NEW',
+    };
+
+    const result = await this.client.send(new UpdateItemCommand(params));
+    return result.Attributes;
   }
 
   async scanCommand(params?: ScanCommandInput): Promise<T[]> {

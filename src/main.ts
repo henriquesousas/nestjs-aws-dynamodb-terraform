@@ -1,15 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { applyGlobalConfig } from './nestjs/@shared/global-config';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   applyGlobalConfig(app);
 
-  const port = process.env.PORT ?? 3000;
+  const configService = app.get(ConfigService);
+  const port = configService.get<string>('HTTP_PORT') ?? 3000;
 
   await app.listen(port, () => {
     console.log(`App running at port ${port}`);
   });
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error during application startup:', err);
+});

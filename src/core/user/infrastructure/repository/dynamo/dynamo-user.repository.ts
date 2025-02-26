@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */ /* eslint-disable prettier/prettier */
-
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { User, UserId } from '../../../domain/entities/user';
 import { UserFilter, UserRepository } from '../../../domain/user.repository';
@@ -11,11 +9,11 @@ export class DynamoUserRepository
   extends AbstractDynamoDbService<UserOutputMapperDto>
   implements UserRepository
 {
-  //TODO: use env
-  protected tableName = 'dev-users';
+  protected tableName: string;
 
-  constructor(client: DynamoDBClient) {
+  constructor(tableName: string, client: DynamoDBClient) {
     super(client);
+    this.tableName = tableName;
   }
 
   async create(user: User): Promise<UserId> {
@@ -30,8 +28,22 @@ export class DynamoUserRepository
     return user.props.userId!;
   }
 
-  update(user: User): Promise<boolean> {
-    throw new Error();
+  async update(user: User): Promise<boolean> {
+    const key = { id: { S: user.props.userId!.value } };
+    const updateExpression = 'set #name = :name';
+    const expressionAttributeNames = {
+      '#name': 'name',
+    };
+    const expressionAttributeValues = {
+      ':name': { S: user.props.name.value },
+    };
+    await this.updateItem(
+      key,
+      updateExpression,
+      expressionAttributeNames,
+      expressionAttributeValues,
+    );
+    return true;
   }
 
   async findBy(filter: UserFilter): Promise<User[]> {

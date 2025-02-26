@@ -2,25 +2,27 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { CreateUserUseCase } from '@core/user/application/usecases/create-user/create-user.usecase';
 import { GetAllUsersUseCase } from '@core/user/application/usecases/get-user/get-all-users.usecase';
 import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get-user-by-id.usecase';
+import { UpdateUserUseCase } from '@core/user/application/usecases/update/update-user.usecase';
 import { UserRepository } from '@core/user/domain/user.repository';
 import { DynamoUserRepository } from '@core/user/infrastructure/repository/dynamo/dynamo-user.repository';
 import { LocalUserRepository } from '@core/user/infrastructure/repository/local/local_user.repository';
+import { ConfigService } from '@nestjs/config';
 
-//TODO: use env
 export const AWS_SERVICES = {
   DYNAMODB_CLIENT: {
     provide: 'DYNAMO_DB_CLIENT',
-    useFactory: () => {
+    inject: [ConfigService],
+    useFactory: (configService: ConfigService) => {
       return new DynamoDBClient({
-        region: 'local',
-        endpoint: 'http://localhost:8000',
+        region: configService.get<string>('AWS_REGION'),
+        endpoint: configService.get<string>('AWS_URL'),
         credentials: {
-          accessKeyId: 'fakeAccessKeyId',
-          secretAccessKey: 'fakeSecretAccessKey',
+          accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID') ?? '',
+          secretAccessKey:
+            configService.get<string>('AWS_SECRET_ACCESS_KEY') ?? '',
         },
       });
     },
-    // inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
   },
 };
 export const REPOSITORIES = {
@@ -33,9 +35,12 @@ export const REPOSITORIES = {
 
   DYNAMODB_USER_REPOSITORY: {
     provide: DynamoUserRepository,
-    inject: [AWS_SERVICES.DYNAMODB_CLIENT.provide],
-    useFactory: (client: DynamoDBClient) => {
-      return new DynamoUserRepository(client);
+    inject: [AWS_SERVICES.DYNAMODB_CLIENT.provide, ConfigService],
+    useFactory: (client: DynamoDBClient, configService: ConfigService) => {
+      return new DynamoUserRepository(
+        configService.get<string>('DYNAMO_TABLE_USERS') ?? '',
+        client,
+      );
     },
   },
 };
@@ -60,6 +65,14 @@ export const USECASES = {
     provide: GetAllUsersUseCase,
     useFactory: (repository: UserRepository) => {
       return new GetAllUsersUseCase(repository);
+    },
+    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+  },
+
+  UPDATE_USERS_USECASE: {
+    provide: UpdateUserUseCase,
+    useFactory: (repository: UserRepository) => {
+      return new UpdateUserUseCase(repository);
     },
     inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
   },

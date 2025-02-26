@@ -1,11 +1,11 @@
-import { mockUserRepository } from '../../../../../../../test/mocks/repository.mock';
-
 import { User } from '@core/user/domain/entities/user';
 import { UserAlreadyExistException } from '@core/user/domain/exception/user-already-exist.exception';
 import { EntityValidationException } from '@core/@shared/entity-validation.exception';
 import { UserBuilder } from '@core/user/application/builder/user.builder';
 import { UserRepository } from '@core/user/domain/user.repository';
 import { CreateUserUseCase } from '../create-user.usecase';
+
+let mockUserRepository: any;
 
 type SutType = {
   repository: UserRepository;
@@ -20,7 +20,7 @@ const makeSut = (): SutType => {
     password: '123456',
   }).build();
 
-  const repository = mockUserRepository;
+  const repository = mockUserRepository as UserRepository;
   const sut = new CreateUserUseCase(repository);
   return {
     repository,
@@ -30,6 +30,17 @@ const makeSut = (): SutType => {
 };
 
 describe('CrateUserUseCase Unit Test', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    mockUserRepository = {
+      findBy: jest.fn(),
+      create: jest.fn(),
+    };
+  });
+
   it('should create a new user', async () => {
     const { sut, userMock, repository } = makeSut();
 
@@ -40,8 +51,6 @@ describe('CrateUserUseCase Unit Test', () => {
       email: 'user1@mail.com',
       password: '123456',
     });
-
-    console.log(result.error);
 
     const user = result.asArray()[0];
     expect(result.isOk()).toBe(true);

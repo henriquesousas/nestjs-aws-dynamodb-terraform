@@ -8,11 +8,14 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
 } from '@nestjs/common';
-import { CreateUserRequestDto } from './create-user-request-dto';
+import { CreateUserRequestDto } from './dtos/create-user-request-dto';
 import { HttpResponse } from '../@shared/http-response';
 import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get-user-by-id.usecase';
 import { GetAllUsersUseCase } from '@core/user/application/usecases/get-user/get-all-users.usecase';
+import { UpdateUserUseCase } from '@core/user/application/usecases/update/update-user.usecase';
+import { UpdateUserRequestDto } from './dtos/update-user-request-dto';
 
 @Controller('user')
 export class UserController {
@@ -24,6 +27,9 @@ export class UserController {
 
   @Inject(GetAllUsersUseCase)
   private readonly getAllUsersUseCase: GetAllUsersUseCase;
+
+  @Inject(UpdateUserUseCase)
+  private readonly updateUserUseCase: UpdateUserUseCase;
 
   @Post()
   @HttpCode(201)
@@ -57,5 +63,18 @@ export class UserController {
     const [user, error] = (await this.getAllUsersUseCase.execute()).asArray();
     if (error) throw error;
     return HttpResponse.ok(user);
+  }
+
+  @Put('/:userId')
+  @HttpCode(204)
+  async update(
+    @Param('userId', new ParseUUIDPipe({ errorHttpStatusCode: 422 }))
+    userId: string,
+    @Body() dto: UpdateUserRequestDto,
+  ): Promise<void> {
+    const data = await this.updateUserUseCase.execute({ ...dto, userId });
+    if (data.isFail()) {
+      throw data.error;
+    }
   }
 }
