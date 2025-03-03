@@ -9,7 +9,7 @@ async function bootstrap() {
   applyGlobalConfig(app);
 
   const configService = app.get(ConfigService);
-  const port = configService.get<string>('HTTP_PORT') ?? 3000;
+  const port = configService.get<string>('HTTP_PORT') ?? 8000;
 
   await app.listen(port, () => {
     console.log(`App running at port ${port}`);
