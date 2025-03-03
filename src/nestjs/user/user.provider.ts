@@ -50,7 +50,7 @@ export const USECASES = {
     useFactory: (repository: UserRepository) => {
       return new CreateUserUseCase(repository);
     },
-    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+    inject: [REPOSITORIES.LOCAL_USER_REPOSITORY.provide],
   },
 
   GET_USER_BY_ID_USECASE: {
@@ -58,7 +58,7 @@ export const USECASES = {
     useFactory: (repository: UserRepository) => {
       return new GetUserByIdUseCase(repository);
     },
-    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+    inject: [REPOSITORIES.LOCAL_USER_REPOSITORY.provide],
   },
 
   GET_ALL_USERS_USECASE: {
@@ -66,7 +66,7 @@ export const USECASES = {
     useFactory: (repository: UserRepository) => {
       return new GetAllUsersUseCase(repository);
     },
-    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+    inject: [REPOSITORIES.LOCAL_USER_REPOSITORY.provide],
   },
 
   UPDATE_USERS_USECASE: {
@@ -74,7 +74,7 @@ export const USECASES = {
     useFactory: (repository: UserRepository) => {
       return new UpdateUserUseCase(repository);
     },
-    inject: [REPOSITORIES.DYNAMODB_USER_REPOSITORY.provide],
+    inject: [REPOSITORIES.LOCAL_USER_REPOSITORY.provide],
   },
 };
 
