@@ -11,7 +11,6 @@ export type UserBuilderProps = {
 
 export class UserBuilder {
   private createdAt?: Date;
-  private updatedAt?: Date;
   private userId?: UserId;
   private isActive?: boolean;
   private roles?: Role[];
@@ -44,11 +43,6 @@ export class UserBuilder {
 
   withCreatedAt(date: Date): UserBuilder {
     this.createdAt = date;
-    return this;
-  }
-
-  withUpdatedAt(date: Date): UserBuilder {
-    this.updatedAt = date;
     return this;
   }
 

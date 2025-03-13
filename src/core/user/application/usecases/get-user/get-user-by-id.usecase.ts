@@ -16,12 +16,12 @@ export class GetUserByIdUseCase implements UseCase<UserFilter, UserOutputDto> {
         new EntityValidationException(userId.domainNotification.toJSON()),
       );
     }
-    const users = await this.repository.findBy({ userId: userId.value });
+    const user = await this.repository.findById(new UserId(userId.value));
 
-    if (users.length < 1) {
+    if (!user) {
       return Result.fail(new UserNotFoundException());
     }
-    const user = users[0];
+
     return Result.ok({
       name: user.props.name.value,
       email: user.props.email.value,

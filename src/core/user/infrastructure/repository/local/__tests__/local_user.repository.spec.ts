@@ -1,5 +1,6 @@
 import { UserBuilder } from '@core/user/application/builder/user.builder';
-import { LocalUserRepository } from '../local/local_user.repository';
+import { LocalUserRepository } from '../local_user.repository';
+import { UserId } from '@core/user/domain/entities/user';
 
 describe('LocalUserRepository', () => {
   it('should create an user', async () => {
@@ -49,11 +50,9 @@ describe('LocalUserRepository', () => {
     }).build();
 
     const userId = await sut.create(user);
-    const users = await sut.findBy({
-      userId: user.props.userId?.value,
-    });
+    const userFromDb = await sut.findById(new UserId(user.props.userId?.value));
 
-    expect(users[0].props.userId?.value).toEqual(userId.value);
+    expect(userFromDb!.props.userId?.value).toEqual(userId.value);
   });
 
   it('should find by email', async () => {

@@ -11,12 +11,13 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
-export abstract class AbstractDynamoDbService<T = any> {
-  protected abstract tableName: string;
+export abstract class AwsDynamoDbRepository<T = any> {
+  constructor(
+    private readonly client: DynamoDBClient,
+    private readonly tableName: string,
+  ) {}
 
-  constructor(private readonly client: DynamoDBClient) {}
-
-  async putItemCommand(item: Record<string, any>): Promise<void> {
+  async putCommand(item: Record<string, any>): Promise<void> {
     const command = new PutItemCommand({
       TableName: this.tableName,
       Item: marshall(item),
@@ -24,7 +25,7 @@ export abstract class AbstractDynamoDbService<T = any> {
     await this.client.send(command);
   }
 
-  async updateItem(
+  async updateCommand(
     key: { [key: string]: any },
     updateExpression: string,
     expressionAttributeNames: { [key: string]: string },
@@ -64,7 +65,7 @@ export abstract class AbstractDynamoDbService<T = any> {
       : [];
   }
 
-  async getItemCommand(key: Record<string, any>): Promise<T | null> {
+  async getCommand(key: Record<string, any>): Promise<T | null> {
     const command = new GetItemCommand({
       TableName: this.tableName,
       Key: marshall(key),

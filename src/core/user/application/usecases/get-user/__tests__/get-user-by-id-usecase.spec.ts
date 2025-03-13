@@ -35,14 +35,16 @@ describe('GetUserByIdUseCase Unit Test', () => {
 
   beforeEach(() => {
     mockUserRepository = {
-      findBy: jest.fn(),
+      findById: jest.fn(),
     };
   });
 
   it('should return EntityValidationException if invalid id', async () => {
     const { sut, repository } = makeSut();
 
-    jest.spyOn(repository, 'findBy').mockReturnValueOnce(Promise.resolve([]));
+    jest
+      .spyOn(repository, 'findById')
+      .mockReturnValueOnce(Promise.resolve(null));
 
     const result = await sut.execute({
       userId: 'a7',
@@ -62,8 +64,8 @@ describe('GetUserByIdUseCase Unit Test', () => {
     const { sut, repository, userMock } = makeSut();
 
     jest
-      .spyOn(repository, 'findBy')
-      .mockReturnValueOnce(Promise.resolve([userMock]));
+      .spyOn(repository, 'findById')
+      .mockReturnValueOnce(Promise.resolve(userMock));
 
     const result = await sut.execute({
       userId: userMock.props.userId?.value,

@@ -1,8 +1,7 @@
-/* eslint-disable prettier/prettier */
 import { UserBuilder } from '@core/user/application/builder/user.builder';
 import { User, UserId } from '@core/user/domain/entities/user';
 
-export class UserOutputMapperDto {
+export class UserOutputDto {
   name: string;
   email: string;
   password: string;
@@ -10,7 +9,7 @@ export class UserOutputMapperDto {
   createdAt: Date;
   id: string;
 
-  static toDomain(data: UserOutputMapperDto): User {
+  static toDomain(data: UserOutputDto): User {
     return new UserBuilder({
       name: data.name,
       email: data.email,

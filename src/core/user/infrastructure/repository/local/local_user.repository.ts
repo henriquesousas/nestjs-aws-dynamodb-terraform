@@ -35,6 +35,11 @@ export class LocalUserRepository implements UserRepository {
     return Promise.resolve([]);
   }
 
+  async findById(userId: UserId): Promise<User | null> {
+    const usr = this.users.find((u) => u.props.userId?.value == userId.value);
+    return Promise.resolve(usr ?? null);
+  }
+
   async findAll(): Promise<User[]> {
     return Promise.resolve(this.users);
   }
