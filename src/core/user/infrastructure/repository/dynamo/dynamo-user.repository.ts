@@ -77,10 +77,7 @@ export class DynamoUserRepository
   }
 
   async findAll(): Promise<User[]> {
-    const outputs = await this.scanCommand();
-    return outputs.flatMap((userOutput) => {
-      const user = UserOutputDto.toDomain(userOutput);
-      return user ? [user] : [];
-    });
+    const data = await this.scanCommand();
+    return data.map((userOutput) => UserOutputDto.toDomain(userOutput));
   }
 }

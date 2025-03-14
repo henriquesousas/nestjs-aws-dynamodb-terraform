@@ -1,25 +1,13 @@
 import { Result } from '@core/@shared/result';
 import { UseCaseWithNoInput } from '@core/@shared/usecase';
 import { UserRepository } from '@core/user/domain/user.repository';
-import { UserOutputDto } from '../user-output-dto';
+import { User } from '@core/user/domain/entities/user';
 
-export class GetAllUsersUseCase implements UseCaseWithNoInput<UserOutputDto[]> {
+export class GetAllUsersUseCase implements UseCaseWithNoInput<User[]> {
   constructor(private readonly repository: UserRepository) {}
 
-  async execute(): Promise<Result<UserOutputDto[]>> {
+  async execute(): Promise<Result<User[]>> {
     const users = await this.repository.findAll();
-
-    if (users.length < 1) return Result.ok([]);
-
-    const data = users.map((u) => {
-      return {
-        name: u.props.name.value,
-        email: u.props.email.value,
-        password: u.props.password.value,
-        createdAt: u.props.createdAt!,
-        isActive: u.props.isActive ?? true,
-      } as UserOutputDto;
-    });
-    return Result.ok(data);
+    return users.length < 1 ? Result.ok([]) : Result.ok(users);
   }
 }

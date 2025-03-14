@@ -60,7 +60,7 @@ describe('GetAllUsersUseCase Unit Test', () => {
     const result = await sut.execute();
     const [users] = result.asArray();
     expect(users.length).toBe(2);
-    expect(users[0].name).toBe(user1.props.name.value);
-    expect(users[1].name).toBe(user2.props.name.value);
+    expect(users[0].props.name.value).toBe(user1.props.name.value);
+    expect(users[1].props.name.value).toBe(user2.props.name.value);
   });
 });

@@ -16,6 +16,7 @@ import { GetUserByIdUseCase } from '@core/user/application/usecases/get-user/get
 import { GetAllUsersUseCase } from '@core/user/application/usecases/get-user/get-all-users.usecase';
 import { UpdateUserUseCase } from '@core/user/application/usecases/update/update-user.usecase';
 import { UpdateUserRequestDto } from './dtos/update-user-request-dto';
+import { UserPresenter } from './user.presenter';
 
 @Controller('user')
 export class UserController {
@@ -54,15 +55,17 @@ export class UserController {
     ).asArray();
 
     if (error) throw error;
-    return HttpResponse.ok(user);
+    const userOutput = UserPresenter.fromUser(user);
+    return HttpResponse.ok(userOutput);
   }
 
   @Get()
   @HttpCode(200)
   async getAll(): Promise<HttpResponse> {
-    const [user, error] = (await this.getAllUsersUseCase.execute()).asArray();
+    const [users, error] = (await this.getAllUsersUseCase.execute()).asArray();
     if (error) throw error;
-    return HttpResponse.ok(user);
+    const usersOutput = UserPresenter.fromUsers(users);
+    return HttpResponse.ok(usersOutput);
   }
 
   @Put('/:userId')

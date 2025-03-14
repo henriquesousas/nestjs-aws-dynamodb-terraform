@@ -6,6 +6,7 @@ import { VpcStack } from '../lib/vpc-stack';
 import { EcsClusterStack } from '../lib/ecs-cluster-stack';
 import { LoadBalancerStack } from '../lib/load-balance-stack';
 import { UserServiceStack } from '../lib/user-service-stack';
+import { ApiGatewayStack } from '../lib/api-gateway-stack';
 
 const env: Environment = {
   account: '418272770772',
@@ -51,8 +52,16 @@ const userServiceStack = new UserServiceStack(app, 'UserService', {
   vpc: vpcStack.vpc,
   repository: ecrStack.userServiceRepository,
 });
-
 userServiceStack.addDependency(loadBalancerStack);
 userServiceStack.addDependency(clusterStack);
 userServiceStack.addDependency(vpcStack);
 userServiceStack.addDependency(ecrStack);
+
+const apiStack = new ApiGatewayStack(app, 'Api', {
+  nlb: loadBalancerStack.nlb,
+  env,
+  tags,
+});
+
+apiStack.addDependency(loadBalancerStack);
+apiStack.addDependency(userServiceStack);

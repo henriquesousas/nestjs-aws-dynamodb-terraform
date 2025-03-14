@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 export class DomainNotification {
   errors = new Map<string, string[] | string>();
 

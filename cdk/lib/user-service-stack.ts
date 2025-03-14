@@ -17,6 +17,8 @@ import {
 } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as cdk from 'aws-cdk-lib';
 
 export interface UserServiceStackProps extends StackProps {
   readonly vpc: Vpc;
@@ -29,6 +31,18 @@ export interface UserServiceStackProps extends StackProps {
 export class UserServiceStack extends Stack {
   constructor(scope: Construct, id: string, props: UserServiceStackProps) {
     super(scope, id, props);
+
+    const userDynamoDb = new dynamodb.Table(this, 'UserDynamoDb', {
+      tableName: 'users',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
+      partitionKey: {
+        name: 'id',
+        type: dynamodb.AttributeType.STRING,
+      },
+    });
 
     const taskDefinition = new FargateTaskDefinition(this, 'TaskDefinition', {
       cpu: 512,
@@ -46,7 +60,7 @@ export class UserServiceStack extends Stack {
     });
 
     taskDefinition.addContainer('UserServiceContainer', {
-      image: ContainerImage.fromEcrRepository(props.repository, '1.0.0'),
+      image: ContainerImage.fromEcrRepository(props.repository, '2.0.0'),
       containerName: 'UserService',
       logging: logDriver,
       portMappings: [
@@ -75,7 +89,7 @@ export class UserServiceStack extends Stack {
       desiredCount: 2,
       //Usar esta opcao de ip publico apenas se colocou na criação
       // da VPC o => natGateways: 0,
-      assignPublicIp: true,
+      // assignPublicIp: true,
     });
     // Dando permissão pra acessar o container de repository com a imagem docker
     props.repository.grantPull(taskDefinition.taskRole);
@@ -99,7 +113,6 @@ export class UserServiceStack extends Stack {
         // se demorar 10 segundos, entao entra no modo de desregistrar a applicacao
         timeout: Duration.seconds(10),
         path: '/health',
-        healthyGrpcCodes: '200',
       },
     });
 

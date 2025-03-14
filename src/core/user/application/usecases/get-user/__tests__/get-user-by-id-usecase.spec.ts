@@ -73,6 +73,6 @@ describe('GetUserByIdUseCase Unit Test', () => {
 
     const [user] = result.asArray();
     expect(result.isOk()).toBe(true);
-    expect(user.name).toEqual(userMock.props.name.value);
+    expect(user.props.name.value).toEqual(userMock.props.name.value);
   });
 });

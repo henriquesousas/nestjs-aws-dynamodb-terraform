@@ -17,7 +17,7 @@ export class VpcStack extends Stack {
       vpcName: 'EcommerceVPC',
       maxAzs: 2,
       //DO NOT IN PRODUCTION
-      natGateways: 0,
+      // natGateways: 0,
     });
   }
 }
