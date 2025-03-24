@@ -44,11 +44,25 @@ export class UserServiceStack extends Stack {
       },
     });
 
+    userDynamoDb.addGlobalSecondaryIndex({
+      indexName: 'EmailIndex', // Name of the index
+      partitionKey: {
+        name: 'email', // The attribute to be indexed
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL, // Projection type (ALL means it will project all attributes)
+      readCapacity: 1, // Read capacity for the index
+      writeCapacity: 1, // Write capacity for the index
+    });
+
     const taskDefinition = new FargateTaskDefinition(this, 'TaskDefinition', {
       cpu: 512,
       memoryLimitMiB: 1024,
       family: 'user-service',
     });
+
+    //Atribui a nossa tarefa a permissao de ler e escrever dados na tabela dynamo
+    userDynamoDb.grantReadWriteData(taskDefinition.taskRole);
 
     const logDriver = LogDriver.awsLogs({
       logGroup: new LogGroup(this, 'LogGroup', {
@@ -59,8 +73,9 @@ export class UserServiceStack extends Stack {
       streamPrefix: 'UserService',
     });
 
+    //Definindo o container na AWS
     taskDefinition.addContainer('UserServiceContainer', {
-      image: ContainerImage.fromEcrRepository(props.repository, '2.0.0'),
+      image: ContainerImage.fromEcrRepository(props.repository, '6.0.22'),
       containerName: 'UserService',
       logging: logDriver,
       portMappings: [
@@ -69,17 +84,9 @@ export class UserServiceStack extends Stack {
           protocol: ECSProtocol.TCP,
         },
       ],
-    });
-
-    const albListener = props.alb.addListener('UserServiceAlbListener', {
-      port: 8000,
-      protocol: ApplicationProtocol.HTTP,
-      open: true,
-    });
-
-    const nlbListener = props.nlb.addListener('UserServiceNlbListener', {
-      port: 8000,
-      protocol: Protocol.TCP,
+      environment: {
+        USERS_DYNAMO_DB: userDynamoDb.tableName,
+      },
     });
 
     const service = new FargateService(this, 'UserService', {
@@ -99,6 +106,12 @@ export class UserServiceStack extends Stack {
       Port.tcp(8000),
     );
 
+    const albListener = props.alb.addListener('UserServiceAlbListener', {
+      port: 8000,
+      protocol: ApplicationProtocol.HTTP,
+      open: true,
+    });
+
     albListener.addTargets('UserServiceAlbTarget', {
       targetGroupName: 'UserServiceTargetGroup',
       port: 8000,
@@ -114,6 +127,11 @@ export class UserServiceStack extends Stack {
         timeout: Duration.seconds(10),
         path: '/health',
       },
+    });
+
+    const nlbListener = props.nlb.addListener('UserServiceNlbListener', {
+      port: 8000,
+      protocol: Protocol.TCP,
     });
 
     nlbListener.addTargets('UserServiceNlbTarget', {

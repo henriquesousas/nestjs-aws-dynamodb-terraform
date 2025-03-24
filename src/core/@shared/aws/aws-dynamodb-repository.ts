@@ -1,24 +1,24 @@
+import { UpdateItemCommandInput } from '@aws-sdk/client-dynamodb';
 import {
-  DynamoDBClient,
-  GetItemCommand,
-  PutItemCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
   QueryCommand,
   QueryCommandInput,
   ScanCommand,
   ScanCommandInput,
-  UpdateItemCommand,
-  UpdateItemCommandInput,
-} from '@aws-sdk/client-dynamodb';
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 export abstract class AwsDynamoDbRepository<T = any> {
   constructor(
-    private readonly client: DynamoDBClient,
-    private readonly tableName: string,
+    protected readonly client: DynamoDBDocumentClient,
+    protected readonly tableName: string,
   ) {}
 
   async putCommand(item: Record<string, any>): Promise<void> {
-    const command = new PutItemCommand({
+    const command = new PutCommand({
       TableName: this.tableName,
       Item: marshall(item),
     });
@@ -40,7 +40,7 @@ export abstract class AwsDynamoDbRepository<T = any> {
       ReturnValues: 'UPDATED_NEW',
     };
 
-    const result = await this.client.send(new UpdateItemCommand(params));
+    const result = await this.client.send(new UpdateCommand(params));
     return result.Attributes;
   }
 
@@ -66,7 +66,7 @@ export abstract class AwsDynamoDbRepository<T = any> {
   }
 
   async getCommand(key: Record<string, any>): Promise<T | null> {
-    const command = new GetItemCommand({
+    const command = new GetCommand({
       TableName: this.tableName,
       Key: marshall(key),
     });

@@ -33,8 +33,8 @@ export class ApiGatewayStack extends Stack {
     props: ApiGatewayStackProps,
     vpcLink: VpcLink,
   ) {
-    // /user
     const userResource = restApi.root.addResource('user');
+    // GET ALL /user
     userResource.addMethod(
       'GET',
       new Integration({
@@ -46,6 +46,83 @@ export class ApiGatewayStack extends Stack {
           connectionType: ConnectionType.VPC_LINK,
         },
       }),
+    );
+
+    // POST /user
+    userResource.addMethod(
+      'POST',
+      new Integration({
+        type: IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'POST',
+        uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user',
+        options: {
+          vpcLink,
+          connectionType: ConnectionType.VPC_LINK,
+        },
+      }),
+    );
+
+    const userIdResource = userResource.addResource('{userId}');
+    //Para validar no ApiGateway da AWS que a requisicao deve ter esses parametros,
+    //que podem vir via (body,path,url, etc...)
+    const userIdIntegrationParameters = {
+      'integration.request.path.userId': 'method.request.path.userId',
+    };
+
+    const userIdMethodParameters = {
+      'method.request.path.userId': true,
+    };
+
+    // GET /:userId
+    userIdResource.addMethod(
+      'GET',
+      new Integration({
+        type: IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'GET',
+        uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
+        options: {
+          vpcLink,
+          connectionType: ConnectionType.VPC_LINK,
+          requestParameters: userIdIntegrationParameters,
+        },
+      }),
+      {
+        requestParameters: userIdMethodParameters,
+      },
+    );
+    // PUT /:userId
+    userIdResource.addMethod(
+      'PUT',
+      new Integration({
+        type: IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'PUT',
+        uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
+        options: {
+          vpcLink,
+          connectionType: ConnectionType.VPC_LINK,
+          requestParameters: userIdIntegrationParameters,
+        },
+      }),
+      {
+        requestParameters: userIdMethodParameters,
+      },
+    );
+    // DELETE /:userId
+    userIdResource.addMethod(
+      'DELETE',
+      new Integration({
+        type: IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'DELETE',
+        uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
+        options: {
+          vpcLink,
+          connectionType: ConnectionType.VPC_LINK,
+          requestParameters: userIdIntegrationParameters,
+        },
+      }),
+      {
+        requestParameters: userIdMethodParameters,
+      },
     );
   }
 }

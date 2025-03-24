@@ -9,7 +9,7 @@ import { UserServiceStack } from '../lib/user-service-stack';
 import { ApiGatewayStack } from '../lib/api-gateway-stack';
 
 const env: Environment = {
-  account: '418272770772',
+  account: '',
   region: 'us-east-1',
 };
 
@@ -24,19 +24,19 @@ const ecrStack = new EcrStack(app, 'Ecr', { env, tags });
 
 const vpcStack = new VpcStack(app, 'Vpc', { env, tags });
 
-const clusterStack = new EcsClusterStack(app, 'Cluster', {
-  vpc: vpcStack.vpc,
-  env,
-  tags,
-});
-clusterStack.addDependency(vpcStack);
-
 const loadBalancerStack = new LoadBalancerStack(app, 'LoadBalancer', {
   vpc: vpcStack.vpc,
   env,
   tags,
 });
 loadBalancerStack.addDependency(vpcStack);
+
+const clusterStack = new EcsClusterStack(app, 'Cluster', {
+  vpc: vpcStack.vpc,
+  env,
+  tags,
+});
+clusterStack.addDependency(vpcStack);
 
 const userServiceTags = {
   cost: 'UserService',

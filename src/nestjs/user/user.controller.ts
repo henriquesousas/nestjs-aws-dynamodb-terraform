@@ -35,6 +35,7 @@ export class UserController {
   @Post()
   @HttpCode(201)
   async create(@Body() dto: CreateUserRequestDto): Promise<HttpResponse> {
+    console.log(UserController.name, JSON.stringify(dto));
     const [user, error] = (await this.createUserUseCase.execute(dto)).asArray();
 
     if (error) throw error;
