@@ -4,6 +4,7 @@ import { User } from '@core/user/domain/entities/user';
 import { Result } from '@core/@shared/result';
 import { EntityValidationException } from '@core/@shared/entity-validation.exception';
 import { UserBuilder } from '@core/user/application/builder/user.builder';
+import { UserAlreadyExistException } from '@core/user/domain/exception/user-already-exist.exception';
 
 export class CreateUserInputDto {
   name: string;
@@ -19,13 +20,13 @@ export class CreateUserUseCase implements UseCase<CreateUserInputDto, User> {
       CreateUserUseCase.name,
       'Validando regras de negócio do usuario',
     );
-    // const user = await this.repository.findBy({
-    //   email: dto.email,
-    // });
+    const user = await this.repository.findBy({
+      email: dto.email,
+    });
 
-    // if (user.length > 0) {
-    //   return Result.fail(new UserAlreadyExistException());
-    // }
+    if (user.length > 0) {
+      return Result.fail(new UserAlreadyExistException());
+    }
 
     const newuser = new UserBuilder({
       name: dto.name,

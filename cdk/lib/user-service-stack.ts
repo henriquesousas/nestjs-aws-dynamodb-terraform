@@ -1,36 +1,29 @@
-import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
-import { Peer, Port, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { Repository } from 'aws-cdk-lib/aws-ecr';
-import {
-  Cluster,
-  ContainerImage,
-  FargateService,
-  FargateTaskDefinition,
-  LogDriver,
-  Protocol as ECSProtocol,
-} from 'aws-cdk-lib/aws-ecs';
-import {
-  ApplicationLoadBalancer,
-  ApplicationProtocol,
-  NetworkLoadBalancer,
-  Protocol,
-} from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { Construct } from 'constructs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { Construct } from 'constructs';
+import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
-export interface UserServiceStackProps extends StackProps {
-  readonly vpc: Vpc;
-  readonly cluster: Cluster;
-  readonly nlb: NetworkLoadBalancer;
-  readonly alb: ApplicationLoadBalancer;
-  readonly repository: Repository;
+export interface UserServiceStackProps extends cdk.StackProps {
+  readonly vpc: ec2.Vpc;
+  readonly cluster: ecs.Cluster;
+  readonly nlb: elbv2.NetworkLoadBalancer;
+  readonly alb: elbv2.ApplicationLoadBalancer;
+  readonly repository: ecr.Repository;
 }
 
-export class UserServiceStack extends Stack {
+export class UserServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: UserServiceStackProps) {
     super(scope, id, props);
+
+    // In your ECS Stack
+    const taskRole = new Role(this, 'ECSTaskRole', {
+      assumedBy: new ServicePrincipal('ecs-tasks.amazonaws.com'),
+    });
 
     const userDynamoDb = new dynamodb.Table(this, 'UserDynamoDb', {
       tableName: 'users',
@@ -44,6 +37,17 @@ export class UserServiceStack extends Stack {
       },
     });
 
+    const taskDefinition = new ecs.FargateTaskDefinition(
+      this,
+      'TaskDefinition',
+      {
+        cpu: 512,
+        memoryLimitMiB: 1024,
+        family: 'user-service',
+        taskRole: taskRole,
+      },
+    );
+
     userDynamoDb.addGlobalSecondaryIndex({
       indexName: 'EmailIndex', // Name of the index
       partitionKey: {
@@ -55,33 +59,28 @@ export class UserServiceStack extends Stack {
       writeCapacity: 1, // Write capacity for the index
     });
 
-    const taskDefinition = new FargateTaskDefinition(this, 'TaskDefinition', {
-      cpu: 512,
-      memoryLimitMiB: 1024,
-      family: 'user-service',
-    });
-
     //Atribui a nossa tarefa a permissao de ler e escrever dados na tabela dynamo
     userDynamoDb.grantReadWriteData(taskDefinition.taskRole);
+    userDynamoDb.grantReadWriteData(taskRole);
 
-    const logDriver = LogDriver.awsLogs({
-      logGroup: new LogGroup(this, 'LogGroup', {
+    const logDriver = ecs.LogDriver.awsLogs({
+      logGroup: new logs.LogGroup(this, 'LogGroup', {
         logGroupName: 'UserService',
-        removalPolicy: RemovalPolicy.DESTROY,
-        retention: RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        retention: logs.RetentionDays.ONE_WEEK,
       }),
       streamPrefix: 'UserService',
     });
 
     //Definindo o container na AWS
     taskDefinition.addContainer('UserServiceContainer', {
-      image: ContainerImage.fromEcrRepository(props.repository, '6.0.22'),
+      image: ecs.ContainerImage.fromEcrRepository(props.repository, '6.0.37'),
       containerName: 'UserService',
       logging: logDriver,
       portMappings: [
         {
           containerPort: 8000,
-          protocol: ECSProtocol.TCP,
+          protocol: ecs.Protocol.TCP,
         },
       ],
       environment: {
@@ -89,7 +88,13 @@ export class UserServiceStack extends Stack {
       },
     });
 
-    const service = new FargateService(this, 'UserService', {
+    const albListener = props.alb.addListener('UserServiceAlbListener', {
+      port: 8000,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      open: true,
+    });
+
+    const service = new ecs.FargateService(this, 'UserService', {
       serviceName: 'UserService',
       cluster: props.cluster,
       taskDefinition: taskDefinition,
@@ -100,49 +105,42 @@ export class UserServiceStack extends Stack {
     });
     // Dando permissão pra acessar o container de repository com a imagem docker
     props.repository.grantPull(taskDefinition.taskRole);
-
     service.connections.securityGroups[0].addIngressRule(
-      Peer.ipv4(props.vpc.vpcCidrBlock),
-      Port.tcp(8000),
+      ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
+      ec2.Port.tcp(8000),
     );
-
-    const albListener = props.alb.addListener('UserServiceAlbListener', {
-      port: 8000,
-      protocol: ApplicationProtocol.HTTP,
-      open: true,
-    });
 
     albListener.addTargets('UserServiceAlbTarget', {
       targetGroupName: 'UserServiceTargetGroup',
       port: 8000,
       targets: [service],
-      protocol: ApplicationProtocol.HTTP,
-      deregistrationDelay: Duration.seconds(30),
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      deregistrationDelay: cdk.Duration.seconds(30),
       healthCheck: {
         // a cada requisicao
-        interval: Duration.seconds(30),
+        interval: cdk.Duration.seconds(30),
         enabled: true,
         port: '8000',
         // se demorar 10 segundos, entao entra no modo de desregistrar a applicacao
-        timeout: Duration.seconds(10),
+        timeout: cdk.Duration.seconds(10),
         path: '/health',
       },
     });
 
     const nlbListener = props.nlb.addListener('UserServiceNlbListener', {
       port: 8000,
-      protocol: Protocol.TCP,
+      protocol: elbv2.Protocol.TCP,
     });
 
     nlbListener.addTargets('UserServiceNlbTarget', {
       port: 8000,
       targetGroupName: 'UserServiceNlb',
-      protocol: Protocol.TCP,
+      protocol: elbv2.Protocol.TCP,
       targets: [
         service.loadBalancerTarget({
           containerName: 'UserService',
           containerPort: 8000,
-          protocol: ECSProtocol.TCP,
+          protocol: ecs.Protocol.TCP,
         }),
       ],
     });

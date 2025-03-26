@@ -1,72 +1,52 @@
 import { User, UserId } from '../../../domain/entities/user';
 import { UserFilter, UserRepository } from '../../../domain/user.repository';
 import { AwsDynamoDbRepository } from '../../../../@shared/aws/aws-dynamodb-repository';
-import { marshall } from '@aws-sdk/util-dynamodb';
 import { UserOutputDto } from '../user-output.dto';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 export class DynamoUserRepository
   extends AwsDynamoDbRepository<UserOutputDto>
   implements UserRepository
 {
-  private ddbDocClient: DynamoDBDocumentClient;
-
   constructor(
     readonly tableName: string,
     readonly client: DynamoDBDocumentClient,
   ) {
     //USERS_DYNAMO_DB => esta na configuracao da stack na AWS
     // this.client = DynamoDBDocumentClient.from(new DynamoDBClient());
-    super(client, 'users');
-    const ddbClient = new DynamoDBClient({
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: '',
-        secretAccessKey: '',
-      },
-    });
-    this.ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
+    super(client, tableName);
+    console.log(DynamoUserRepository.name, `Tabela: ${tableName}`);
   }
 
   async create(user: User): Promise<UserId> {
     console.log(
       DynamoUserRepository.name,
-      'Chamando comando de inserir no dynamo',
+      `Chamando comando de inserir no dynamo, Data: ${JSON.stringify(user)}`,
     );
 
-    const item = {
+    await this.putCommand({
       id: user.props.userId?.value,
       name: user.props.name.value,
       email: user.props.email.value,
-    };
-
-    const command = new PutCommand({
-      TableName: this.tableName,
-      Item: item,
+      password: user.props.password.value,
+      isActive: user.props.isActive,
+      createdAt: user.props.createdAt!.toISOString(),
+      updatedAt: user.props.updatedAt!.toISOString(),
     });
-    await this.ddbDocClient.send(command);
-
-    // await this.putCommand({
-    //   id: user.props.userId?.value,
-    //   name: user.props.name.value,
-    //   email: user.props.email.value,
-    //   password: user.props.password.value,
-    //   createdAt: user.props.createdAt!.toISOString(),
-    //   updatedAt: user.props.updatedAt!.toISOString(),
-    // });
     console.log(DynamoUserRepository.name, 'Criado usuário no dynamo');
     return user.props.userId!;
   }
 
   async update(user: User): Promise<boolean> {
-    const key = { id: { S: user.props.userId!.value } };
-    const updateExpression = 'set #name = :name';
+    const key = { id: user.props.userId!.value };
+    const updateExpression = 'SET #name = :name, #email = :email';
     const expressionAttributeNames = {
       '#name': 'name',
+      '#email': 'email',
     };
     const expressionAttributeValues = {
-      ':name': { S: user.props.name.value },
+      ':name': user.props.name.value,
+      ':email': user.props.email.value,
     };
     await this.updateCommand(
       key,
@@ -79,6 +59,10 @@ export class DynamoUserRepository
 
   async findBy(filter: UserFilter): Promise<User[]> {
     if (filter.userId) {
+      console.log(
+        DynamoUserRepository.name,
+        `Buscando usuario pelo Id na tabela ${this.tableName} - ${JSON.stringify(filter)}`,
+      );
       const data = await this.getCommand({ id: filter.userId });
       if (data != null) {
         const user = UserOutputDto.toDomain(data);
@@ -95,7 +79,8 @@ export class DynamoUserRepository
       const data = await this.queryCommand({
         IndexName: 'EmailIndex',
         KeyConditionExpression: 'email = :email',
-        ExpressionAttributeValues: marshall({ ':email': filter.email }),
+        // ExpressionAttributeValues: marshall({ ':email': filter.email }),
+        ExpressionAttributeValues: { ':email': filter.email },
       });
 
       console.log(

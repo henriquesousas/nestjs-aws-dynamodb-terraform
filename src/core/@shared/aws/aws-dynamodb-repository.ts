@@ -9,7 +9,6 @@ import {
   ScanCommandInput,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 export abstract class AwsDynamoDbRepository<T = any> {
   constructor(
@@ -20,7 +19,7 @@ export abstract class AwsDynamoDbRepository<T = any> {
   async putCommand(item: Record<string, any>): Promise<void> {
     const command = new PutCommand({
       TableName: this.tableName,
-      Item: marshall(item),
+      Item: item,
     });
     await this.client.send(command);
   }
@@ -38,18 +37,18 @@ export abstract class AwsDynamoDbRepository<T = any> {
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: 'UPDATED_NEW',
+      ConditionExpression: 'attribute_exists(id)',
     };
 
-    const result = await this.client.send(new UpdateCommand(params));
+    const command = new UpdateCommand(params);
+    const result = await this.client.send(command);
     return result.Attributes;
   }
 
   async scanCommand(params?: ScanCommandInput): Promise<T[]> {
     const command = new ScanCommand({ ...params, TableName: this.tableName });
     const response = await this.client.send(command);
-    return response.Items
-      ? response.Items.map((item) => unmarshall(item) as T)
-      : [];
+    return response.Items ? response.Items.map((item) => item as T) : [];
   }
 
   async queryCommand(
@@ -60,18 +59,19 @@ export abstract class AwsDynamoDbRepository<T = any> {
       ...input,
     });
     const response = await this.client.send(command);
-    return response.Items
-      ? response.Items.map((item) => unmarshall(item) as T)
-      : [];
+
+    console.log(
+      `Resultado do comando QueryCommand - ${JSON.stringify(response.Items)}`,
+    );
+    return response.Items ? response.Items.map((item) => item as T) : [];
   }
 
   async getCommand(key: Record<string, any>): Promise<T | null> {
     const command = new GetCommand({
       TableName: this.tableName,
-      Key: marshall(key),
+      Key: key,
     });
     const { Item } = await this.client.send(command);
-
-    return Item ? (unmarshall(Item) as T) : null;
+    return Item ? (Item as T) : null;
   }
 }

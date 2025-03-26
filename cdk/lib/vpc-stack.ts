@@ -1,5 +1,5 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
-import { Vpc } from 'aws-cdk-lib/aws-ec2';
+import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 
 /**
@@ -7,17 +7,20 @@ import { Construct } from 'constructs';
  * Componente da VPC que permiti que recursos em uma sub-rede privada
  * se comunique com a internet
  */
-export class VpcStack extends Stack {
-  readonly vpc: Vpc;
-  constructor(scope: Construct, id: string, props: StackProps) {
+export class VpcStack extends cdk.Stack {
+  readonly vpc: ec2.Vpc;
+
+  constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
-    //ECR
-    this.vpc = new Vpc(this, 'EcommerceVPC', {
+    this.vpc = new ec2.Vpc(this, 'EcommerceVPC', {
       vpcName: 'EcommerceVPC',
       maxAzs: 2,
       //DO NOT IN PRODUCTION
       // natGateways: 0,
     });
+    // this.vpc.addGatewayEndpoint('DynamoDbEndpoint', {
+    //   service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+    // });
   }
 }

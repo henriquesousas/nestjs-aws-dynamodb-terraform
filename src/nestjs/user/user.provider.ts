@@ -13,14 +13,14 @@ import { DynamoUserRepository } from '@core/user/infrastructure/repository/dynam
 import { LocalUserRepository } from '@core/user/infrastructure/repository/local/local_user.repository';
 import { ConfigService } from '@nestjs/config';
 
-/**AWS tem duas maneiras de se conectat com o Dynamo, de preferencia DYNAMODB_DOCUMENT_CLIENT*/
+/**AWS tem duas maneiras de se conectar com o Dynamo, de preferencia na implementacao do DYNAMODB_DOCUMENT_CLIENT*/
 export const AWS_SERVICES = {
-  DYNAMODB_CLIENT: {
-    provide: 'DYNAMO_DB_CLIENT',
+  DYNAMODB_DOCUMENT_CLIENT: {
+    provide: 'DYNAMODB_DOCUMENT_CLIENT',
     inject: [ConfigService],
     useFactory: (configService: ConfigService) => {
-      return new DynamoDBClient({
-        // endpoint: configService.get<string>('AWS_URL'),
+      const client = new DynamoDBClient({
+        endpoint: configService.get<string>('AWS_URL') ?? '',
         region: configService.get<string>('AWS_REGION') ?? '',
         credentials: {
           accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID') ?? '',
@@ -28,22 +28,7 @@ export const AWS_SERVICES = {
             configService.get<string>('AWS_SECRET_ACCESS_KEY') ?? '',
         },
       });
-    },
-  },
-
-  DYNAMODB_DOCUMENT_CLIENT: {
-    provide: 'DYNAMODB_DOCUMENT_CLIENT',
-    inject: [],
-    useFactory: () => {
-      return DynamoDBDocument.from(
-        new DynamoDBClient({
-          region: 'us-east-1',
-          credentials: {
-            accessKeyId: '123',
-            secretAccessKey: '123',
-          },
-        }),
-      );
+      return DynamoDBDocument.from(client);
     },
   },
 };
@@ -63,10 +48,11 @@ export const REPOSITORIES = {
       client: DynamoDBDocumentClient,
       configService: ConfigService,
     ) => {
-      // ou process.env.USERS_DYNAMO_DB que é o nome da table que foi criado na stack do dynamo
+      // ou process.env.USERS_DYNAMO_DB  é o nome da table que foi criado na stack do dynamo
       // configService.get<string>('DYNAMO_TABLE_USERS') ?? '',
+      // process.env.USERS_DYNAMO_DB ?? from AWS CDK
       return new DynamoUserRepository(
-        process.env.USERS_DYNAMO_DB ?? 'users',
+        configService.get<string>('DYNAMO_TABLE_USERS') ?? '',
         client,
       );
     },

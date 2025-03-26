@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { EcrStack } from '../lib/ecr-stack';
-import { Environment } from 'aws-cdk-lib';
 import { VpcStack } from '../lib/vpc-stack';
-import { EcsClusterStack } from '../lib/ecs-cluster-stack';
 import { LoadBalancerStack } from '../lib/load-balance-stack';
+import { ClusterStack } from '../lib/cluster-stack';
 import { UserServiceStack } from '../lib/user-service-stack';
 import { ApiGatewayStack } from '../lib/api-gateway-stack';
 
-const env: Environment = {
-  account: '',
+const env: cdk.Environment = {
+  account: '418272770772',
   region: 'us-east-1',
 };
 
@@ -21,17 +20,15 @@ const tags = {
 const app = new cdk.App();
 
 const ecrStack = new EcrStack(app, 'Ecr', { env, tags });
-
 const vpcStack = new VpcStack(app, 'Vpc', { env, tags });
-
-const loadBalancerStack = new LoadBalancerStack(app, 'LoadBalancer', {
+const lbStack = new LoadBalancerStack(app, 'LoadBalancer', {
   vpc: vpcStack.vpc,
   env,
   tags,
 });
-loadBalancerStack.addDependency(vpcStack);
+lbStack.addDependency(vpcStack);
 
-const clusterStack = new EcsClusterStack(app, 'Cluster', {
+const clusterStack = new ClusterStack(app, 'Cluster', {
   vpc: vpcStack.vpc,
   env,
   tags,
@@ -46,22 +43,22 @@ const userServiceTags = {
 const userServiceStack = new UserServiceStack(app, 'UserService', {
   tags: userServiceTags,
   env: env,
-  alb: loadBalancerStack.alb,
-  nlb: loadBalancerStack.nlb,
+  alb: lbStack.alb,
+  nlb: lbStack.nlb,
   cluster: clusterStack.cluster,
   vpc: vpcStack.vpc,
   repository: ecrStack.userServiceRepository,
 });
-userServiceStack.addDependency(loadBalancerStack);
+userServiceStack.addDependency(lbStack);
 userServiceStack.addDependency(clusterStack);
 userServiceStack.addDependency(vpcStack);
 userServiceStack.addDependency(ecrStack);
 
 const apiStack = new ApiGatewayStack(app, 'Api', {
-  nlb: loadBalancerStack.nlb,
+  nlb: lbStack.nlb,
   env,
   tags,
 });
 
-apiStack.addDependency(loadBalancerStack);
+apiStack.addDependency(lbStack);
 apiStack.addDependency(userServiceStack);

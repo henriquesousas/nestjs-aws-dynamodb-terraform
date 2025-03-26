@@ -1,27 +1,21 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
-import {
-  ConnectionType,
-  Integration,
-  IntegrationType,
-  RestApi,
-  VpcLink,
-} from 'aws-cdk-lib/aws-apigateway';
-import { NetworkLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as cdk from 'aws-cdk-lib';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
-interface ApiGatewayStackProps extends StackProps {
-  nlb: NetworkLoadBalancer;
+interface ApiGatewayStackProps extends cdk.StackProps {
+  nlb: elbv2.NetworkLoadBalancer;
 }
 
-export class ApiGatewayStack extends Stack {
+export class ApiGatewayStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
     super(scope, id, props);
 
-    const vpcLink = new VpcLink(this, 'VpcLink', {
+    const vpcLink = new apigateway.VpcLink(this, 'VpcLink', {
       targets: [props.nlb],
     });
 
-    const restApi = new RestApi(this, 'RestApi', {
+    const restApi = new apigateway.RestApi(this, 'RestApi', {
       restApiName: 'ECommerceRestApi',
     });
 
@@ -29,21 +23,21 @@ export class ApiGatewayStack extends Stack {
   }
 
   private createUserResource(
-    restApi: RestApi,
+    restApi: apigateway.RestApi,
     props: ApiGatewayStackProps,
-    vpcLink: VpcLink,
+    vpcLink: apigateway.VpcLink,
   ) {
     const userResource = restApi.root.addResource('user');
     // GET ALL /user
     userResource.addMethod(
       'GET',
-      new Integration({
-        type: IntegrationType.HTTP_PROXY,
+      new apigateway.Integration({
+        type: apigateway.IntegrationType.HTTP_PROXY,
         integrationHttpMethod: 'GET',
         uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user',
         options: {
           vpcLink,
-          connectionType: ConnectionType.VPC_LINK,
+          connectionType: apigateway.ConnectionType.VPC_LINK,
         },
       }),
     );
@@ -51,13 +45,13 @@ export class ApiGatewayStack extends Stack {
     // POST /user
     userResource.addMethod(
       'POST',
-      new Integration({
-        type: IntegrationType.HTTP_PROXY,
+      new apigateway.Integration({
+        type: apigateway.IntegrationType.HTTP_PROXY,
         integrationHttpMethod: 'POST',
         uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user',
         options: {
           vpcLink,
-          connectionType: ConnectionType.VPC_LINK,
+          connectionType: apigateway.ConnectionType.VPC_LINK,
         },
       }),
     );
@@ -76,13 +70,13 @@ export class ApiGatewayStack extends Stack {
     // GET /:userId
     userIdResource.addMethod(
       'GET',
-      new Integration({
-        type: IntegrationType.HTTP_PROXY,
+      new apigateway.Integration({
+        type: apigateway.IntegrationType.HTTP_PROXY,
         integrationHttpMethod: 'GET',
         uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
         options: {
           vpcLink,
-          connectionType: ConnectionType.VPC_LINK,
+          connectionType: apigateway.ConnectionType.VPC_LINK,
           requestParameters: userIdIntegrationParameters,
         },
       }),
@@ -93,13 +87,13 @@ export class ApiGatewayStack extends Stack {
     // PUT /:userId
     userIdResource.addMethod(
       'PUT',
-      new Integration({
-        type: IntegrationType.HTTP_PROXY,
+      new apigateway.Integration({
+        type: apigateway.IntegrationType.HTTP_PROXY,
         integrationHttpMethod: 'PUT',
         uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
         options: {
           vpcLink,
-          connectionType: ConnectionType.VPC_LINK,
+          connectionType: apigateway.ConnectionType.VPC_LINK,
           requestParameters: userIdIntegrationParameters,
         },
       }),
@@ -110,13 +104,13 @@ export class ApiGatewayStack extends Stack {
     // DELETE /:userId
     userIdResource.addMethod(
       'DELETE',
-      new Integration({
-        type: IntegrationType.HTTP_PROXY,
+      new apigateway.Integration({
+        type: apigateway.IntegrationType.HTTP_PROXY,
         integrationHttpMethod: 'DELETE',
         uri: 'http://' + props.nlb.loadBalancerDnsName + ':8000/user/{userId}',
         options: {
           vpcLink,
-          connectionType: ConnectionType.VPC_LINK,
+          connectionType: apigateway.ConnectionType.VPC_LINK,
           requestParameters: userIdIntegrationParameters,
         },
       }),
